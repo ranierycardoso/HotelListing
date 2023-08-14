@@ -20,6 +20,13 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 
 // Add Logger (Serilog)
 builder.Logging.AddSerilog();
+// Add CORS
+builder.Services.AddCors(o => {
+    o.AddPolicy("AllowAll", b =>
+        b.AllowAnyOrigin()
+         .AllowAnyMethod()
+         .AllowAnyHeader());
+});
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -43,6 +50,7 @@ try
     app.UseSwagger();
     app.UseSwaggerUI();
     //app.UseSwaggerUI(c => c.SwaggerEndpoint("swagger/v1/swagger.json", "HotelListing v1"));
+    app.UseCors("AllowAll");
     app.UseHttpsRedirection();
     app.UseAuthorization();
     app.MapControllers();
