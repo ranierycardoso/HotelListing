@@ -1,7 +1,11 @@
 using HotelListing.Configurations;
 using HotelListing.Data;
+using HotelListing.IRepository;
+using HotelListing.Repository;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Security.Cryptography.Xml;
+using System.Text.Json.Serialization;
 
 // Cofigure Logger (Serilog)
 Log.Logger = new LoggerConfiguration()
@@ -30,8 +34,12 @@ builder.Services.AddCors(o => {
 });
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MapperInitializer));
+// Add Unit Of Work
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(
+    opt => opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve
+    );
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
