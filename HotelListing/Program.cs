@@ -1,3 +1,4 @@
+using HotelListing;
 using HotelListing.Configurations;
 using HotelListing.Data;
 using HotelListing.IRepository;
@@ -22,9 +23,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("sqlConnection"))
 );
-
 // Add Logger (Serilog)
 builder.Logging.AddSerilog();
+// Configure Identity
+builder.Services.AddAuthentication();
+builder.Services.ConfigureIdentity();
 // Add CORS
 builder.Services.AddCors(o => {
     o.AddPolicy("AllowAll", b =>
