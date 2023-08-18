@@ -3,6 +3,7 @@ using HotelListing.Configurations;
 using HotelListing.Data;
 using HotelListing.IRepository;
 using HotelListing.Repository;
+using HotelListing.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Security.Cryptography.Xml;
@@ -26,8 +27,10 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 // Add Logger (Serilog)
 builder.Logging.AddSerilog();
 // Configure Identity
-builder.Services.AddAuthentication();
 builder.Services.ConfigureIdentity();
+// Configure JWT Authentication
+//builder.Services.AddAuthentication();
+builder.Services.ConfigureJWT(builder.Configuration);
 // Add CORS
 builder.Services.AddCors(o => {
     o.AddPolicy("AllowAll", b =>
@@ -37,8 +40,9 @@ builder.Services.AddCors(o => {
 });
 // Add AutoMapper
 builder.Services.AddAutoMapper(typeof(MapperInitializer));
-// Add Unit Of Work
+// Add Unit Of Work / AuthManager
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAuthManager, AuthManager>();
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(
     opt => opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve
@@ -46,9 +50,9 @@ builder.Services.AddControllers().AddJsonOptions(
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
-    {
-        c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "HotelListing", Version = "v1" });
-    });
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "HotelListing", Version = "v1" });
+});
 
 try
 {
@@ -66,6 +70,8 @@ try
     //app.UseSwaggerUI(c => c.SwaggerEndpoint("swagger/v1/swagger.json", "HotelListing v1"));
     app.UseCors("AllowAll");
     app.UseHttpsRedirection();
+    app.UseRouting();
+    app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
     app.Run();
