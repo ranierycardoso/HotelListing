@@ -1,9 +1,11 @@
+using AspNetCoreRateLimit;
 using HotelListing;
 using HotelListing.Configurations;
 using HotelListing.Data;
 using HotelListing.IRepository;
 using HotelListing.Repository;
 using HotelListing.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Security.Cryptography.Xml;
@@ -26,6 +28,12 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
 );
 // Add Logger (Serilog)
 builder.Logging.AddSerilog();
+// Add Request Limiting/Throt
+builder.Services.AddMemoryCache();
+builder.Services.ConfigureRateLimiting();
+builder.Services.AddHttpContextAccessor();
+// Add Response Caching
+builder.Services.ConfigureHttpCacheHeaders();
 // Configure Identity
 builder.Services.ConfigureIdentity();
 // Configure JWT Authentication
@@ -44,9 +52,11 @@ builder.Services.AddAutoMapper(typeof(MapperInitializer));
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthManager, AuthManager>();
 // Add services to the container.
-builder.Services.AddControllers().AddJsonOptions(
-    opt => opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve
-    );
+builder.Services.AddControllers(config => {
+    config.CacheProfiles.Add("120SecondsDuration", new CacheProfile { Duration = 120 });
+}).AddJsonOptions(opt => opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+// Add API versioning
+builder.Services.ConfigureVersioning();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -71,6 +81,9 @@ try
     app.ConfigureExceptionHandler();
     app.UseCors("AllowAll");
     app.UseHttpsRedirection();
+    app.UseResponseCaching();
+    app.UseHttpCacheHeaders();
+    app.UseIpRateLimiting();
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
